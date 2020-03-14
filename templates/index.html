@@ -2,82 +2,108 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="../static/styles.css">
     <title>Tweets Sur EDF</title>
 </head>
 <body>
-<div id="container">
-    <div id="word-cloud">
-
+<div class='container' id="container">
+    <div class="row">
+        <div class="col m10" id="search_bar">
+            <input type="text" id="search">
+        </div>
+        <div class="col m2">
+            <a id="search_button" class="waves-effect waves-light btn">Search</a>
+        </div>
     </div>
+    <div id="word-cloud"></div>
+
+    <div id="my_dataviz"></div>
 </div>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
 <script
-  src="https://code.jquery.com/jquery-3.4.1.min.js"
-  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-  crossorigin="anonymous"></script>
+        src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+        crossorigin="anonymous"></script>
 <script src="https://d3js.org/d3.v5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.5/d3.layout.cloud.min.js" ></script>
 
 <script>
+    $('#search_button').click(function(evt){
 
-    $.ajax({
-        url:'/get_tweets',
-        mode: 'GET'
-    ,success: function(data){
-            data = JSON.parse(data);
-            console.log(data);
-            let words = data
-            const width = document.getElementById("container").offsetWidth * 0.95,
-                height = 500,
-                fontFamily = "Open Sans",
-                fontScale = d3.scaleLinear().range([20, 120]), // Construction d'une échelle linéaire continue qui va d'une font de 20px à 120px
-                fillScale = d3.scaleOrdinal(d3.schemeCategory10); // Construction d'une échelle discrète composée de 10 couleurs différentes
-
-
-                // Calcul du domain d'entrée de notre fontScale
-                // L'objectif est que la plus petite occurence d'un mot soit associée à une font de 20px
-                // La plus grande occurence d'un mot est associée à une font de 120px
-                let minSize = d3.min(words, function(d) { return d.size; });
-                let maxSize = d3.max(words, function(d) { return d.size; });
-
-                // Nous projettons le domaine [plus_petite_occurence, plus_grande_occurence] vers le range [20, 120]
-                // Ainsi les mots les moins fréquents seront plus petits et les plus fréquents plus grands
-                fontScale.domain([minSize, maxSize]);
-
-                d3.layout.cloud()
-                    .size([width, height])
-                    .words(words)
-                    .padding(1)
-                    .rotate(function() {
-                        return ~~(Math.random() * 2) * 45;
-                    })
-                    .spiral("rectangular")
-                    .font(fontFamily)
-                    .fontSize(function(d) { return fontScale(d.size); })
-                    .on("end", draw)
-                    .start();
+	    $.ajax({
+		url:'/get_tweets/'+ $('#search').val(),
+		mode: 'GET'
+		,success: function(data) {
+		    data = JSON.parse(data);
+		    let words = data;
+		    var width = document.getElementById("container").offsetWidth * 0.95,
+			height = 500,
+			fontFamily = "Open Sans",
+			fontScale = d3.scaleLinear().range([20, 120]), // Construction d'une échelle linéaire continue qui va d'une font de 20px à 120px
+			fillScale = d3.scaleOrdinal(d3.schemeCategory10); // Construction d'une échelle discrète composée de 10 couleurs différentes
 
 
-                function draw() {
-                    d3.select("#word-cloud").append("svg") // Ajout d'un élément SVG sur un DIV existant de la page
-                        .attr("class", "svg")
-                        .attr("width", width)
-                        .attr("height", height)
-                        .append("g") // Ajout du groupe qui contiendra tout les mots
-                            .attr("transform", "translate(" + width / 2 + ", " + height / 2 + ")") // Centrage du groupe
-                            .selectAll("text")
-                            .data(words)
-                            .enter().append("text") // Ajout de chaque mot avec ses propriétés
-                                .style("font-size", function(d) { return d.size + "px"; })
-                                .style("font-family", fontFamily)
-                                .style("fill", function(d, i) { return fillScale(d.size); })
-                                .attr("text-anchor", "middle")
-                                .attr("transform", function(d) { return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")"; })
-                                .text(function(d) { return d.text; });
-}
-        }});
+		    // Calcul du domain d'entrée de notre fontScale
+		    // L'objectif est que la plus petite occurence d'un mot soit associée à une font de 20px
+		    // La plus grande occurence d'un mot est associée à une font de 120px
+		    let minSize = d3.min(words, function (d) {
+			return d.size;
+		    });
+		    let maxSize = d3.max(words, function (d) {
+			return d.size;
+		    });
+
+		    // Nous projettons le domaine [plus_petite_occurence, plus_grande_occurence] vers le range [20, 120]
+		    // Ainsi les mots les moins fréquents seront plus petits et les plus fréquents plus grands
+		    fontScale.domain([minSize, maxSize]);
+
+		    d3.layout.cloud()
+			.size([width, height])
+			.words(words)
+			.padding(1)
+			.rotate(function () {
+			    return ~~(Math.random() * 2) * 45;
+			})
+			.spiral("rectangular")
+			.font(fontFamily)
+			.fontSize(function (d) {
+			    return fontScale(d.size);
+			})
+			.on("end", draw)
+			.start();
 
 
+		    function draw() {
+			d3.select("#word-cloud").append("svg") // Ajout d'un élément SVG sur un DIV existant de la page
+			    .attr("class", "svg")
+			    .attr("width", width)
+			    .attr("height", height)
+			    .append("g") // Ajout du groupe qui contiendra tout les mots
+			    .attr("transform", "translate(" + width / 2 + ", " + height / 2 + ")") // Centrage du groupe
+			    .selectAll("text")
+			    .data(words)
+			    .enter().append("text") // Ajout de chaque mot avec ses propriétés
+			    .style("font-size", function (d) {
+				return d.size + "px";
+			    })
+			    .style("font-family", fontFamily)
+			    .style("fill", function (d, i) {
+				return fillScale(d.size);
+			    })
+			    .attr("text-anchor", "middle")
+			    .attr("transform", function (d) {
+				return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+			    })
+			    .text(function (d) {
+				return d.text;
+			    });
+		    }
 
+		    $('#word-cloud').css('border', '1px black solid');
+		}});
+    });
 </script>
 </html>
